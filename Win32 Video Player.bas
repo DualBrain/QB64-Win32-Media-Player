@@ -10,8 +10,9 @@ Console Off
 
 $ExeIcon:'Video Player icons\video.ico'
 Icon
-
+'$Let UNICODE = DEFINED
 '$Include:'OpenSave.BI'
+'$Include:'TaskDlg.BI'
 
 Const DEFEXT = "MP4"
 
@@ -98,6 +99,8 @@ Const BS_BITMAP = &H00000080
 Const TBM_SETRANGE = WM_USER + 6
 Const TBM_SETPOS = WM_USER + 5
 
+Const SW_SHOWNORMAL = 1
+
 Type POINT
     As Long x, y
 End Type
@@ -156,6 +159,7 @@ Declare CustomType Library
     Sub RedrawWindow (ByVal hWnd As Offset, Byval lprcUpdate As Offset, Byval hrgnUpdate As Offset, Byval flags As Unsigned Long)
     Sub SetTimer (ByVal hWnd As Offset, Byval nIDEvent As Unsigned Offset, Byval uElapse As Unsigned Long, Byval lpTimerFunc As Offset)
     Sub ClientToScreen (ByVal hWnd As Offset, Byval lpPoint As Offset)
+    Sub ShellExecuteW (ByVal hwnd As Offset, lpOperation As String, lpFile As String, Byval lpParameters As Offset, Byval lpDirectory As Offset, Byval nShowCmd As Long)
     Function GetLastError& ()
 End Declare
 
@@ -252,6 +256,8 @@ ToggleEnable rewindBtn, 0
 ToggleEnable ffBtn, 0
 ToggleEnable trackbar, 0
 
+SendMessage trackbar, TBM_SETRANGE, 0, MAKELPARAM(0, 100)
+
 ShowWindow parentWin, SW_SHOWDEFAULT
 UpdateWindow parentWin
 
@@ -270,7 +276,6 @@ If CommandCount > 0 Then
         ToggleEnable pauseBtn, 1
         ToggleEnable rewindBtn, 1
         ToggleEnable ffBtn, 1
-        SendMessage trackbar, TBM_SETRANGE, 0, MAKELPARAM(0, 100)
     End If
 End If
 
@@ -302,15 +307,24 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
             videof = Mid$(dropped, 1, InStr(dropped, Chr$(0)))
             Print hDrop, videof
             DragFinish hDrop
-            SetWindowText text, Offset(videof)
-            qPlay Mid$(videof, 1, Len(videof) - 1)
-            videoWin = FindWindow(0, Offset(videof))
-            CenterWindow videoWin
-            LockWindowResize videoWin
-            ToggleEnable pauseBtn, 1
-            ToggleEnable rewindBtn, 1
-            ToggleEnable ffBtn, 1
-            SendMessage trackbar, TBM_SETRANGE, 0, MAKELPARAM(0, 100)
+            If CheckExtension(Mid$(videof, 1, Len(videof) - 1)) And FileExists(Mid$(videof, 1, Len(videof) - 1)) Then
+                If isPlaying = "playing" Or isPlaying = "paused" Then
+                    AlreadyPlayingPopup Mid$(videof, 1, Len(videof) - 1)
+                Else
+                    SetWindowText text, Offset(videof)
+                    qPlay Mid$(videof, 1, Len(videof) - 1)
+                    videoWin = FindWindow(0, Offset(videof))
+                    CenterWindow videoWin
+                    LockWindowResize videoWin
+                    ToggleEnable pauseBtn, 1
+                    ToggleEnable rewindBtn, 1
+                    ToggleEnable ffBtn, 1
+                End If
+            ElseIf CheckExtension(Mid$(videof, 1, Len(videof) - 1)) And FileExists(Mid$(videof, 1, Len(videof) - 1)) = 0 Then
+                ErrorPopup "File Path Error", "File contains unsupported characters", "The file you have selected contains characters that this program is currently unable to handle. Please stay tuned as I might eventually add support for Unicode files."
+            Else
+                ErrorPopup "File Format Error", "Unsupported file format", "I haven't yet checked this file type. Perhaps it is a strange one you like. However, please stick to using the ones allowed by the open file dialog." + Chr$(10) + Chr$(10) + "-Spriggsy"
+            End If
         Case WM_TIMER
             Select Case wParam
                 Case 1
@@ -321,17 +335,29 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
         Case WM_COMMAND
             Select Case lParam
                 Case selectBtn
-                    Dim As String video: video = ComDlgFileName("Select Video", Dir$("videos"), "Video Files (*.AVI, *.MP4, *.MKV, *.MPG)|*.AVI;*.MP4;*.MKV;*.MPG", 2, 0) + Chr$(0)
+                    Dim As String video: video = ComDlgFileName("Select Video", Dir$("videos"), "Video Files (*.AVI, *.MP4, *.MKV, *.MPG, *.WMV)|*.AVI;*.MP4;*.MKV;*.MPG;*.WMV", 2, 0) + Chr$(0)
+                    Print video, Len(video)
                     If Mid$(video, 1, Len(video) - 1) <> "" Then
-                        SetWindowText text, Offset(video)
-                        qPlay Mid$(video, 1, Len(video) - 1)
-                        videoWin = FindWindow(0, Offset(video))
-                        CenterWindow videoWin
-                        LockWindowResize videoWin
-                        ToggleEnable pauseBtn, 1
-                        ToggleEnable rewindBtn, 1
-                        ToggleEnable ffBtn, 1
-                        SendMessage trackbar, TBM_SETRANGE, 0, MAKELPARAM(0, 100)
+                        If CheckExtension(Mid$(video, 1, Len(video) - 1)) And FileExists(Mid$(video, 1, Len(video) - 1)) Then
+                            If isPlaying = "playing" Or isPlaying = "paused" Then
+                                AlreadyPlayingPopup Mid$(video, 1, Len(video) - 1)
+                            Else
+                                Print Mid$(video, 1, Len(video) - 1)
+                                SetWindowText text, Offset(video)
+                                qPlay Mid$(video, 1, Len(video) - 1)
+                                videoWin = FindWindow(0, Offset(video))
+                                CenterWindow videoWin
+                                LockWindowResize videoWin
+                                ToggleEnable pauseBtn, 1
+                                ToggleEnable rewindBtn, 1
+                                ToggleEnable ffBtn, 1
+                            End If
+                        ElseIf CheckExtension(Mid$(video, 1, Len(video) - 1)) And FileExists(Mid$(video, 1, Len(video) - 1)) = 0 Then
+                            Print "File path error"
+                            ErrorPopup "File Path Error", "File contains unsupported characters", "The file you have selected contains characters that this program is currently unable to handle. Please stay tuned as I might eventually add support for Unicode files."
+                        Else
+                            ErrorPopup "File Format Error", "Unsupported file format", "I haven't yet checked this file type. Perhaps it is a strange one you like. However, please stick to using the ones allowed by the open file dialog." + Chr$(10) + Chr$(10) + "-Spriggsy"
+                        End If
                     End If
                     Exit Case
                 Case pauseBtn
@@ -373,6 +399,94 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
                 SetTrackBarVal trackbar, Round((GetVideoPos * 100) / (GetVideoLength))
             End If
             WindowProc = DefWindowProc(hwnd, uMsg, wParam, lParam)
+    End Select
+End Function
+
+Sub ErrorPopup (eTitle As String, mciErrString As String, errMessage As String)
+    Print "ErrorPopup"
+
+    Dim As TASKDIALOGCONFIG tdconfig
+    tdconfig.dwCommonButtons = TDCBF_OK_BUTTON
+    Dim As String tdbtntext: tdbtntext = ANSIToUnicode("OK" + Chr$(0))
+
+    tdconfig.cbSize = Len(tdconfig)
+    tdconfig.hwndParent = parentWin
+    tdconfig.dwFlags = TDF_ENABLE_HYPERLINKS Or TDF_CALLBACK_TIMER Or TDF_POSITION_RELATIVE_TO_WINDOW
+
+    Dim As String szTitle: szTitle = ANSIToUnicode(eTitle + Chr$(0))
+    tdconfig.pszWindowTitle = Offset(szTitle)
+    tdconfig.pszMainIcon = TD_ERROR_ICON
+    Dim As String szHeader: szHeader = ANSIToUnicode(mciErrString + Chr$(0))
+    tdconfig.pszMainInstruction = Offset(szHeader)
+    Dim As String szBodyText: szBodyText = ANSIToUnicode(errMessage + Chr$(0))
+    tdconfig.pszContent = Offset(szBodyText)
+    tdconfig.nDefaultButton = IDOK
+
+    tdconfig.pfCallback = TaskDialogCallback
+
+    TaskDialogIndirect Offset(tdconfig), 0, 0, 0
+End Sub
+
+Sub AlreadyPlayingPopup (filename As String)
+    Print "Already playing"
+
+    Dim As Offset hr
+
+    Dim As TASKDIALOGCONFIG tdconfig
+    Dim As TASKDIALOG_BUTTON tdbtns(0 To 1)
+    Dim As Long nButtonID
+
+    tdbtns(0).nButtonID = TDCBF_YES_BUTTON
+    tdbtns(1).nButtonID = TDCBF_CANCEL_BUTTON
+
+    Dim As String tdbtn1Text: tdbtn1Text = ANSIToUnicode("Play new file" + Chr$(0))
+    Dim As String tdbtn2Text: tdbtn2Text = ANSIToUnicode("Cancel" + Chr$(0))
+    tdbtns(0).pszButtonText = Offset(tdbtn1Text)
+    tdbtns(1).pszButtonText = Offset(tdbtn2Text)
+
+    tdconfig.cbSize = Len(tdconfig)
+    tdconfig.hwndParent = parentWin
+    tdconfig.dwFlags = TDF_CALLBACK_TIMER Or TDF_POSITION_RELATIVE_TO_WINDOW
+
+    Dim As String szTitle: szTitle = ANSIToUnicode("New File Detected" + Chr$(0))
+    tdconfig.pszWindowTitle = Offset(szTitle)
+    tdconfig.pszMainIcon = TD_INFORMATION_ICON
+    Dim As String szHeader: szHeader = ANSIToUnicode("A new file has been loaded" + Chr$(0))
+    tdconfig.pszMainInstruction = Offset(szHeader)
+    Dim As String szBodyText: szBodyText = ANSIToUnicode("Do you wish to play the new file " + Chr$(34) + filename + Chr$(34) + " or cancel?" + Chr$(0))
+    tdconfig.pszContent = Offset(szBodyText)
+
+    tdconfig.cButtons = 2
+    tdconfig.pButtons = Offset(tdbtns())
+    tdconfig.nDefaultButton = IDYES
+
+    hr = TaskDialogIndirect(Offset(tdconfig), Offset(nButtonID), 0, 0)
+
+    If SUCCEEDED(hr) And nButtonID = TDCBF_YES_BUTTON Then
+        SetWindowText text, Offset(filename)
+        qPlay filename
+        filename = filename + Chr$(0)
+        videoWin = FindWindow(0, Offset(filename))
+        CenterWindow videoWin
+        LockWindowResize videoWin
+        ToggleEnable pauseBtn, 1
+        ToggleEnable rewindBtn, 1
+        ToggleEnable ffBtn, 1
+    End If
+End Sub
+
+Function TaskDlgCallback%& (hwnd As _Offset, msg As _Unsigned Long, wParam As _Unsigned _Offset, lParam As _Offset, lpRefData As _Offset)
+    Select Case msg
+        Case TDN_BUTTON_CLICKED
+            Select Case wParam
+                Case TDCBF_OK_BUTTON
+                    Exit Function
+            End Select
+        Case TDN_HYPERLINK_CLICKED 'Pointer to string containing hyperlink is stored in lParam
+            If lParam Then 'checking that the value isn't 0
+                Dim As String hyperlink: hyperlink = wCharPtrToString(lParam) 'converting the lParam pointer to an ANSI string
+                ShellExecuteW 0, ANSIToUnicode("open" + Chr$(0)), hyperlink + Chr$(0), 0, 0, SW_SHOWNORMAL
+            End If
     End Select
 End Function
 
@@ -511,9 +625,12 @@ Function GetTitlebarSize~& ()
 End Function
 
 Sub qPlay (fileName As String)
-    OpenMediaFile fileName
-    SizeVideoWindow 1280, 720
-    PlayMediaFile
+    If OpenMediaFile(fileName) = 0 Then
+        SizeVideoWindow 1280, 720
+        PlayMediaFile
+    Else
+        qStop
+    End If
 End Sub
 
 Sub qPause ()
@@ -534,6 +651,17 @@ Sub qStop ()
     SetWindowText text, 0
     SetTrackBarVal trackbar, 0
 End Sub
+
+Function CheckExtension%% (fileName As String)
+    '*.AVI;*.MP4;*.MKV;*.MPG;*.WMV
+    Dim As String extension: extension = UCase$(Right$(fileName, 4))
+    Print extension
+    If extension <> ".AVI" And extension <> ".MP4" And extension <> ".MKV" And extension <> ".MPG" And extension <> ".WMV" Then
+        CheckExtension = 0
+    Else
+        CheckExtension = -1
+    End If
+End Function
 
 Sub SeekLeft ()
     Dim As Unsigned Integer64 position: position = GetVideoPos
@@ -567,12 +695,27 @@ Function GetVideoPos~&&
     GetVideoPos = Val(Mid$(position, 1, InStr(position, Chr$(0)) - 1))
 End Function
 
-Sub OpenMediaFile (fileName As String)
+Function OpenMediaFile~& (fileName As String)
     ClosePlayer
-    Dim As String playCommand: playCommand = "Open " + Chr$(34) + fileName + Chr$(34) + " type mpegvideo alias movie" + Chr$(0)
-    mciSendString Offset(playCommand), 0, 0, 0
-    isOpen = -1
-End Sub
+    If CheckExtension(fileName) = -1 Then
+        Dim As Unsigned Long mciError
+        Dim As String playCommand: playCommand = "Open " + Chr$(34) + fileName + Chr$(34) + " type mpegvideo alias movie" + Chr$(0)
+        mciError = mciSendString(Offset(playCommand), 0, 0, 0)
+        Print mciError
+        If mciError <> 0 Then
+            Dim As String errString: errString = Space$(128)
+            mciGetErrorString mciError, Offset(errString), 128
+            ErrorPopup "MCI Error Encountered", Mid$(errString, 1, InStr(errString, Chr$(0)) - 1), "Most MCI errors are caused by not having the proper codec installed. To fix this, please install the K-Lite Codec Pack Full by clicking this link:" + Chr$(10) + "<A HREF=" + Chr$(34) + "https://codecguide.com/download_k-lite_codec_pack_full.htm" + Chr$(34) + ">K-Lite Codec Pack Full Download</A>"
+            isOpen = 0
+        Else
+            isOpen = -1
+        End If
+    Else
+        mciError = 461
+        ErrorPopup "File Format Error", "Unsupported file format", "I haven't yet checked this file type. Perhaps it is a strange one you like. However, please stick to using the ones allowed by the open file dialog." + Chr$(10) + Chr$(10) + "-Spriggsy"
+    End If
+    OpenMediaFile = mciError
+End Function
 
 Sub SizeVideoWindow (maxX As Unsigned Long, maxY As Unsigned Long)
     Dim As String size: size = GetVideoSize
@@ -595,7 +738,7 @@ Sub SizeVideoWindow (maxX As Unsigned Long, maxY As Unsigned Long)
         iTop = (maxY - newHeight) \ 2
     End If
     Print GetTitlebarSize
-    Dim As String res: res = "put movie window at " + LTrim$(Str$(iLeft)) + " " + LTrim$(Str$(iTop)) + " " + LTrim$(Str$(newWidth)) + " " + LTrim$(Str$(newHeight + GetTitlebarSize * 2)) + Chr$(0)
+    Dim As String res: res = "put movie window at " + LTrim$(Str$(iLeft)) + " " + LTrim$(Str$(iTop)) + " " + LTrim$(Str$(newWidth)) + " " + LTrim$(Str$(newHeight + GetTitlebarSize * 4)) + Chr$(0)
     mciSendString Offset(res), 0, 0, 0
 End Sub
 
@@ -669,5 +812,20 @@ Sub tokenize (toTokenize As String, delimiters As String, StorageArray() As Stri
     Wend
     ReDim Preserve StorageArray(UBound(StorageArray) - 1)
 End Sub
+
+Function wCharPtrToString$ (wchar As _Offset)
+    Declare CustomType Library
+        Function wcslen%& (ByVal str As _Offset)
+    End Declare
+    Dim As _Offset wlen: wlen = wcslen(wchar) * 2 'The length does not account for the 2-byte nature of Unicode so we multiply by 2
+    Dim As _MEM pChar: pChar = _Mem(wchar, wlen) 'Declaring a new _MEM block and setting it to grab the number of bytes referenced by wlen at pointer wchar
+    Dim As String char: char = Space$(wlen) 'Declaring a new string large enough to hold the unicode string
+    _MemGet pChar, pChar.OFFSET, char 'Storing the data in the string
+    _MemFree pChar 'Freeing the _MEM block
+    wCharPtrToString = UnicodeToANSI(char) 'Returning the converted Unicode string
+End Function
+
+'$INCLUDE:'unicodetoansi.bas'
+
 
 '$Include:'OpenSave.BM'
