@@ -159,7 +159,7 @@ Declare CustomType Library
     Sub RedrawWindow (ByVal hWnd As Offset, Byval lprcUpdate As Offset, Byval hrgnUpdate As Offset, Byval flags As Unsigned Long)
     Sub SetTimer (ByVal hWnd As Offset, Byval nIDEvent As Unsigned Offset, Byval uElapse As Unsigned Long, Byval lpTimerFunc As Offset)
     Sub ClientToScreen (ByVal hWnd As Offset, Byval lpPoint As Offset)
-    Sub ShellExecuteW (ByVal hwnd As Offset, lpOperation As String, lpFile As String, Byval lpParameters As Offset, Byval lpDirectory As Offset, Byval nShowCmd As Long)
+    Sub ShellExecuteW (ByVal hwnd As Offset, Byval lpOperation As Offset, Byval lpFile As Offset, Byval lpParameters As Offset, Byval lpDirectory As Offset, Byval nShowCmd As Long)
     Function GetLastError& ()
 End Declare
 
@@ -422,6 +422,9 @@ Sub ErrorPopup (eTitle As String, mciErrString As String, errMessage As String)
     tdconfig.pszContent = Offset(szBodyText)
     tdconfig.nDefaultButton = IDOK
 
+    Dim As String szFooter: szFooter = ANSIToUnicode("Visit my <A HREF=" + Chr$(34) + "https://github.com/SpriggsySpriggs/QB64-Win32-Video-Player" + Chr$(34) + ">GitHub repo</A> for this project" + Chr$(0))
+    tdconfig.pszFooter = Offset(szFooter)
+
     tdconfig.pfCallback = TaskDialogCallback
 
     TaskDialogIndirect Offset(tdconfig), 0, 0, 0
@@ -446,7 +449,7 @@ Sub AlreadyPlayingPopup (filename As String)
 
     tdconfig.cbSize = Len(tdconfig)
     tdconfig.hwndParent = parentWin
-    tdconfig.dwFlags = TDF_CALLBACK_TIMER Or TDF_POSITION_RELATIVE_TO_WINDOW
+    tdconfig.dwFlags = TDF_CALLBACK_TIMER Or TDF_POSITION_RELATIVE_TO_WINDOW Or TDF_ENABLE_HYPERLINKS
 
     Dim As String szTitle: szTitle = ANSIToUnicode("New File Detected" + Chr$(0))
     tdconfig.pszWindowTitle = Offset(szTitle)
@@ -456,9 +459,13 @@ Sub AlreadyPlayingPopup (filename As String)
     Dim As String szBodyText: szBodyText = ANSIToUnicode("Do you wish to play the new file " + Chr$(34) + filename + Chr$(34) + " or cancel?" + Chr$(0))
     tdconfig.pszContent = Offset(szBodyText)
 
+    Dim As String szFooter: szFooter = ANSIToUnicode("Visit my <A HREF=" + Chr$(34) + "https://github.com/SpriggsySpriggs/QB64-Win32-Video-Player" + Chr$(34) + ">GitHub repo</A> for this project" + Chr$(0))
+    tdconfig.pszFooter = Offset(szFooter)
+
     tdconfig.cButtons = 2
     tdconfig.pButtons = Offset(tdbtns())
     tdconfig.nDefaultButton = IDYES
+    tdconfig.pfCallback = TaskDialogCallback
 
     hr = TaskDialogIndirect(Offset(tdconfig), Offset(nButtonID), 0, 0)
 
@@ -484,8 +491,8 @@ Function TaskDlgCallback%& (hwnd As _Offset, msg As _Unsigned Long, wParam As _U
             End Select
         Case TDN_HYPERLINK_CLICKED 'Pointer to string containing hyperlink is stored in lParam
             If lParam Then 'checking that the value isn't 0
-                Dim As String hyperlink: hyperlink = wCharPtrToString(lParam) 'converting the lParam pointer to an ANSI string
-                ShellExecuteW 0, ANSIToUnicode("open" + Chr$(0)), hyperlink + Chr$(0), 0, 0, SW_SHOWNORMAL
+                Dim As String comm: comm = ANSIToUnicode("open" + Chr$(0))
+                ShellExecuteW 0, Offset(comm), lParam, 0, 0, SW_SHOWNORMAL
             End If
     End Select
 End Function
