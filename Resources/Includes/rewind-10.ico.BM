@@ -1,0 +1,51 @@
+Sub __rewind
+    If _FileExists(".\Resources\Icons\rewind-10.ico") = 0 Then 'remove this line if you are compiling in FreeBasic
+        '#lang "qb" 'uncomment this line if compiling in FreeBasic
+        Dim A$
+        A$ = ""
+        A$ = A$ + "haIkGf4JC4457OfVX1[fVVZ]DQ:V35o4A##mH5mP#1]jQZNaKj1_8h5Q2RAA"
+        A$ = A$ + "AaC2NGmPP4:82R8XhQZ5]h7XGmPX[D4;2]n=JCKbco?Wo[IBjVd]FSN9_`_T"
+        A$ = A$ + "=_i]_oc\cKfIGSa3OBWfXOKbfRad^aHF50^<KaHmo;3]=DcFZKAg4ADj4\GB"
+        A$ = A$ + "WdWbl0[7d;X?B_dWffO;mel6HmAOa0m0N4H2WfWPnjQaD[d_9`M0iUYKiIK="
+        A$ = A$ + "E3e_E`Xdg`PMC6Vn6UaD;eO<jK0WJR1X_aZ[OMm[[o\GOVW51^48;hQQXO:P"
+        A$ = A$ + "?m=2S;;?FHKYV3jk>nL]0mK4LA#^#R97K[aiPnJOoU\?4`G4kn;JkNP^X>n>"
+        A$ = A$ + "ahCOMaHnCegSmQF;Sik<GkaaXKLYX??WhR7LNo;=7mg8h#lg>TbfGdijmf0k"
+        A$ = A$ + "A:^G^;k3\E#cAML`lf6W?DCgCjHPF2Ao=1NJ8eB1f70W1\TXX?cI3PM2N_CN"
+        A$ = A$ + ">:8A8j[GKNB5dNL`Y0;NFX]>o_6`P>iiIP=DN>V1meam9RjhVi;H]aeTR?Ob"
+        A$ = A$ + "G17A2iibV1mo4hhRmnAELmTcHF[ek6LG`T<7JOh:PU6fiG1m3jg5heo[3f^H"
+        A$ = A$ + "[CGPHG?5WXcW;4\>`i0_Z\cofPECMRRnjHnNBYe=CAo?6LN`Q1k7L0#6`=1_"
+        A$ = A$ + "E:mnQO7L3aF74ZfQXoW5klMK<oJ=cgLbI1fGVTJUSo?OIalJf?GFedfAo=;f"
+        A$ = A$ + "WImd2GO:fe?JOo\LL?>cMU<Mln2`E1k#\c=E[DeEoE2f5XMIj[=Scna11G#\"
+        A$ = A$ + "e2Jme34kld]0G6d_H_7e\JO7YhkbDegIa9>mNX[#\_WcJ1Y5KmGTe\^mognM"
+        A$ = A$ + "Ek#h`kKbDT>Z85J`DTHVW[eOnaTC2llCD8VObYRiWhS9l=VTPU3jn=6CVA6d"
+        A$ = A$ + "CNg?BFbRUOB`%%L2"
+        Dim btemp$
+        Dim i&
+        Dim B$
+        Dim C%
+        Dim F$
+        Dim C$
+        Dim j
+        Dim t%
+        Dim B&
+        Dim X$
+        Dim BASFILE$
+        btemp$ = ""
+        For i& = 1 To Len(A$) Step 4: B$ = Mid$(A$, i&, 4)
+            If InStr(1, B$, "%") Then
+                For C% = 1 To Len(B$): F$ = Mid$(B$, C%, 1)
+                    If F$ <> "%" Then C$ = C$ + F$
+                Next: B$ = C$: End If: For j = 1 To Len(B$)
+                If Mid$(B$, j, 1) = "#" Then
+            Mid$(B$, j) = "@": End If: Next
+            For t% = Len(B$) To 1 Step -1
+                B& = B& * 64 + Asc(Mid$(B$, t%)) - 48
+                Next: X$ = "": For t% = 1 To Len(B$) - 1
+                X$ = X$ + Chr$(B& And 255): B& = B& \ 256
+        Next: btemp$ = btemp$ + X$: Next
+        BASFILE$ = _Inflate$(btemp$): btemp$ = ""
+        Open ".\Resources\Icons\rewind-10.ico" For Output As #1
+        Print #1, BASFILE$;
+        Close #1
+    End If 'remove this line if you are compiling in FreeBasic
+End Sub

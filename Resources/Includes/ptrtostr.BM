@@ -1,0 +1,42 @@
+$If PTRTOSTR = UNDEFINED Then
+    $Let PTRTROSTR = DEFINED
+    Declare Library ".\internal\c\c_compiler\x86_64-w64-mingw32\include\strsafe"
+    End Declare
+    Function PointerToWideString$ (pointer As _Offset)
+        $If WCSLEN = UNDEFINED Then
+            $Let WCSLEN = DEFINED
+            Declare CustomType Library
+                Function wcslen%& (ByVal str As _Offset)
+            End Declare
+        $End If
+        Declare CustomType Library
+            Sub StringCchCopyW (ByVal pszDest As _Offset, Byval cchDest As _Offset, Byval pszSrc As _Offset)
+        End Declare
+        Dim As _Offset length: length = wcslen(pointer) * 2 'The length does not account for the 2-byte nature of Unicode so we multiply by 2
+        Dim As String __dest: __dest = Space$(length)
+        StringCchCopyW _Offset(__dest), Len(__dest), pointer
+        PointerToWideString = __dest
+    End Function
+
+    Function PointerToString$ (pointer As _Offset)
+        $If TCSLEN = UNDEFINED Then
+            $Let TCSLEN = DEFINED
+            $If 64BIT Then
+                Declare CustomType Library ".\internal\c\c_compiler\x86_64-w64-mingw32\include\tchar"
+                    Function tcslen%& Alias "_tcslen" (ByVal str As _Offset)
+                End Declare
+            $Else
+                Declare CustomType Library ".\internal\c\c_compiler\i686-w64-mingw32\include\tchar"
+                Function tcslen%& Alias "_tcslen" (ByVal str As _Offset)
+                End Declare
+            $End If
+        $End If
+        Declare CustomType Library
+            Sub StringCchCopyA (ByVal pszDest As _Offset, Byval cchDest As _Offset, Byval pszSrc As _Offset)
+        End Declare
+        Dim As _Offset length: length = tcslen(pointer)
+        Dim As String __dest: __dest = Space$(length)
+        StringCchCopyA _Offset(__dest), Len(__dest), pointer
+        PointerToString = __dest
+    End Function
+$End If

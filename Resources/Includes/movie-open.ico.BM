@@ -1,0 +1,53 @@
+Sub __movieopen
+    If _FileExists(".\Resources\Icons\movie-open.ico") = 0 Then 'remove this line if you are compiling in FreeBasic
+        '#lang "qb" 'uncomment this line if compiling in FreeBasic
+        Dim A$
+        A$ = ""
+        A$ = A$ + "haIgG^4JC6447OCC]YZeB\:ElECdRRG4ZR??h3XWlPRBY:NaGGj1?XRR:hQV"
+        A$ = A$ + "ZhS3:R2R7D_8:D5la91?Xd#DAD15j1A#QZiP?0;8e7DXfaook>O=K29]iSlU"
+        A$ = A$ + ":jFne2k^In?IVIWM[a42o4?^QofdIDSYNSa\00Vb\FSMnQ6H]DeJYL?4A8Q0"
+        A$ = A$ + "e1V2HBL^aZQZo41G0L=`^79mem?I`Z0]0J]8IcPe3V][mEka_kOE\SKF8mem"
+        A$ = A$ + "65L8`703:nKl6`B:AmG=hmnDGAmek2ZX4e_57KN6`VTR;nc?gRDKd8hDPKYj"
+        A$ = A$ + "AoZOeVY1MZcCJ3DSSn]jXO[5bG7UjWU1NAA6g^<S?1\n<>l0`gdhN_BVJYne"
+        A$ = A$ + "ilVo\PX1\nE2ZE\imjdlA_Z=I^X6WehIc#1Un5`OlCmgoSjcLam5K=iao;XO"
+        A$ = A$ + "H`2ejbhSUjG0=H?:fW<OmZ;Kj;I>KN7`k4km5STnkDbn\BY2]ef;dg_lXOOB"
+        A$ = A$ + "VN515mi3m;gSQeGeV\5`g5kMY?F\m[hk6^^Ti>SPPK3FA>jG5H_P?3B1^:81"
+        A$ = A$ + "HGPVee3\jalDK>E`UbCLRgILAaFoh]gj5kK5JB\_I9DYhKZ=K0L_LdVgKm:a"
+        A$ = A$ + "NN=T^_8P33N=hYPe9fN<NfYJ5oZoddH^khSP=TSmiKmB[[cjSij\fd1W6l8m"
+        A$ = A$ + "_c`I=joEZf:[hUcjD[gZalOXe3Sga6\ViiZf_4\DWehn>0hWPO3J?WLfl1W0"
+        A$ = A$ + "\7`R1S;?n#UJ>UagmYa4_eHobKh4GhiW:T<mhg8hCjjLOcaicBkL5mke0Pc;"
+        A$ = A$ + "fjVlU72Yfc=VKDoRfUgS]Oanf1_m_L#gZf?3\bLR;74l;9ch8N[kcJ4Z5oOH"
+        A$ = A$ + "VPSmSXnCgJ>I[>[ah3[GnRSf\obflSfSR?A=VUH??BZfAOV3NXF?h=H_]V32"
+        A$ = A$ + "m;2OKVRm]i\FjLRml=ka<_b]nih7<_ac2l\JSJ>K<Aoo56X=K<B?V6Ree`4g"
+        A$ = A$ + "TBjaQ1SU=BJ#Z^<V`^TH=hB[VJGB4_=9a>BNb49khH9k8Lhd7]Z8bCZ9R<8#"
+        A$ = A$ + "68RV36Jl7hFU%%h1"
+        Dim btemp$
+        Dim i&
+        Dim B$
+        Dim C%
+        Dim F$
+        Dim C$
+        Dim j
+        Dim t%
+        Dim B&
+        Dim X$
+        Dim BASFILE$
+        btemp$ = ""
+        For i& = 1 To Len(A$) Step 4: B$ = Mid$(A$, i&, 4)
+            If InStr(1, B$, "%") Then
+                For C% = 1 To Len(B$): F$ = Mid$(B$, C%, 1)
+                    If F$ <> "%" Then C$ = C$ + F$
+                Next: B$ = C$: End If: For j = 1 To Len(B$)
+                If Mid$(B$, j, 1) = "#" Then
+            Mid$(B$, j) = "@": End If: Next
+            For t% = Len(B$) To 1 Step -1
+                B& = B& * 64 + Asc(Mid$(B$, t%)) - 48
+                Next: X$ = "": For t% = 1 To Len(B$) - 1
+                X$ = X$ + Chr$(B& And 255): B& = B& \ 256
+        Next: btemp$ = btemp$ + X$: Next
+        BASFILE$ = _Inflate$(btemp$): btemp$ = ""
+        Open ".\Resources\Icons\movie-open.ico" For Output As #1
+        Print #1, BASFILE$;
+        Close #1
+    End If 'remove this line if you are compiling in FreeBasic
+End Sub

@@ -1,0 +1,44 @@
+Sub __playpause
+    If _FileExists(".\Resources\Icons\play-pause.ico") = 0 Then 'remove this line if you are compiling in FreeBasic
+        '#lang "qb" 'uncomment this line if compiling in FreeBasic
+        Dim A$
+        A$ = ""
+        A$ = A$ + "haIkFgk;355677oDALIY]4Y3<LkP8F<#R5A2V\8Q52C8aXGnCX3f\86i_03n"
+        A$ = A$ + "G03fd19fK#<I`[E8ARLlmaiA^ESfddQkIXgO=OJB?_mdg^WkaHBaSli=bcVS"
+        A$ = A$ + "bJ<i<6c#PV<CIL]oCX_cCkTTTTTXH]FAJd=B9_^1WC0V6KXf63Xme9FGKO;\"
+        A$ = A$ + "8bmO[]>nAa^HR6imP>W<HOl2N6_SienT?;G[]o6>C[A]F[a`5h:<3JGK_Ne?"
+        A$ = A$ + ";>dng\PfG?hQ:J_XFSjEoRjH;QUAGNZnB^7KZO?jSj;AnMM7dGec;VZ_Tbh0"
+        A$ = A$ + "<HUc=6[_T?`aHHM\aMmUl9>5SKe[?Sij;i;LYe]7A[FmmigonloOUeJhS[on"
+        A$ = A$ + "MoWn[NNa#mmin_njn?nln_=ki?f3?Q7]^cI<W=jl7UdfO5WPAZCmKVcOeQe]"
+        A$ = A$ + "O`:Ze#X=j\I;Y]_:V5mf8[MBBB[#\e8gIK;hFLSX0V4Q832#ZZ4Xm5ZS]PK^"
+        A$ = A$ + "bJ8[E]Zcg0T3%%h1"
+        Dim btemp$
+        Dim i&
+        Dim B$
+        Dim C%
+        Dim F$
+        Dim C$
+        Dim j
+        Dim t%
+        Dim B&
+        Dim X$
+        Dim BASFILE$
+        btemp$ = ""
+        For i& = 1 To Len(A$) Step 4: B$ = Mid$(A$, i&, 4)
+            If InStr(1, B$, "%") Then
+                For C% = 1 To Len(B$): F$ = Mid$(B$, C%, 1)
+                    If F$ <> "%" Then C$ = C$ + F$
+                Next: B$ = C$: End If: For j = 1 To Len(B$)
+                If Mid$(B$, j, 1) = "#" Then
+            Mid$(B$, j) = "@": End If: Next
+            For t% = Len(B$) To 1 Step -1
+                B& = B& * 64 + Asc(Mid$(B$, t%)) - 48
+                Next: X$ = "": For t% = 1 To Len(B$) - 1
+                X$ = X$ + Chr$(B& And 255): B& = B& \ 256
+        Next: btemp$ = btemp$ + X$: Next
+        BASFILE$ = _Inflate$(btemp$): btemp$ = ""
+        Open ".\Resources\Icons\play-pause.ico" For Output As #1
+        Print #1, BASFILE$;
+        Close #1
+    End If 'remove this line if you are compiling in FreeBasic
+End Sub

@@ -1,0 +1,54 @@
+Sub __fastforward
+    If _FileExists(".\Resources\Icons\fast-forward-30.ico") = 0 Then 'remove this line if you are compiling in FreeBasic
+        '#lang "qb" 'uncomment this line if compiling in FreeBasic
+        Dim A$
+        A$ = ""
+        A$ = A$ + "haIkFV4JC6457OBKZOZ]VVjBATRFLO5?h6Na::R;PR8EA?8RR[8:XG\2:9R["
+        A$ = A$ + "7L15mP51mP8EmP22N#D8R8BEA5\7lP:AAa5\ed#M[=fWoOMNOVa_nUT_l1aC"
+        A$ = A$ + "mEnUna<_In?;_i=SB50oEMe:nGE3QEZ:E:eH1X8e\Ejbkb#Mg;TVN\<K4A<3"
+        A$ = A$ + "7\D`b=XF`21E128nYT_[BZ[FagU1V584kS?dOcP4Dg]TP;16QQnSD:;YQOM2"
+        A$ = A$ + "N3H_PnV?SQLX_]]E#_4fFFlkMPIj3mM^nc[We1NYd_WAFK39OCBMe9nNF`g0"
+        A$ = A$ + "O5\flM?83SYY0JDdZN#i2e;UeXh3kkj5]ie`=i7mYdaFU:cci2NZXeA1Ui#o"
+        A$ = A$ + "71VVd^=:JW#nf_jcmo90=3J5l;`K1cG6KQ;`jG1hL6aCO7LJ`#Tj;djGZ\oM"
+        A$ = A$ + "I`]1]0j0\>#`2Yn^<F<So\So;Hkoi#o2Fl_dni1^0hZP[hHmW]S1jW`aUbJA"
+        A$ = A$ + "lY1`SUm9>^MEn#o\Uo[=BWW_8#aT>oDK^h7W3niPAi3mG3hebLZIQ_0J2\3B"
+        A$ = A$ + "7gIkKHY\V4OHOo8h>P59SA_Z;W?WS[]8mI_nkP`BM:7H9eIjKXLY]dFfW1Cj"
+        A$ = A$ + "Hg]0VZMoFX=Se_m8[I\aiK6TGeGj3N^>7`:Yom=3f\2BWo^2cnEJK_1kb8^i"
+        A$ = A$ + "CP5;aGNEo12>4Y?cU9S?C<MWm9Un\mc<l=6HLTl>7?>6608Z4oiVmglC^dfB"
+        A$ = A$ + "0kTdgIcf_9mIOnM>1bSm1>^;B6F7LEOSfbgYLAAKfJ7L;Bo>^PIK]PBOGMIR"
+        A$ = A$ + "n]j3mI6_XIW6[3_2L4`T8mmAFbhQQ?_f7IN_0`eUi^IkcYn>63C4L3`?Tfam"
+        A$ = A$ + "5O_okUbii7WOOeP]Cjg7l#I>Wb#_?3^[aJAFegaHHXPC2RK<G\W?M8k=];OW"
+        A$ = A$ + "bQ?L<dCTa7O>VS9Cj5mM<>hHbU#jgFo2Se3g<FO>G=O7h19mnHADjl;7Pdk["
+        A$ = A$ + "c`;jkHL`_OWcM\K`i1gDFG_?Y__kJPC1fPXK#ZkiHZTd_WN<iSn^<FhhkZ1C"
+        A$ = A$ + "0<I`X9M^kBl`nJ9ib_N\o_VM`KZ0AS0Z9UBe5DlPe#:Q0boS[af7fo457;bn"
+        A$ = A$ + "Akg75c::8FThFaZ9QElbSKU#Y\n90nJeYBMH:Ja?PB<\?HNXi?PR%%L2"
+        Dim btemp$
+        Dim i&
+        Dim B$
+        Dim C%
+        Dim F$
+        Dim C$
+        Dim j
+        Dim t%
+        Dim B&
+        Dim X$
+        Dim BASFILE$
+        btemp$ = ""
+        For i& = 1 To Len(A$) Step 4: B$ = Mid$(A$, i&, 4)
+            If InStr(1, B$, "%") Then
+                For C% = 1 To Len(B$): F$ = Mid$(B$, C%, 1)
+                    If F$ <> "%" Then C$ = C$ + F$
+                Next: B$ = C$: End If: For j = 1 To Len(B$)
+                If Mid$(B$, j, 1) = "#" Then
+            Mid$(B$, j) = "@": End If: Next
+            For t% = Len(B$) To 1 Step -1
+                B& = B& * 64 + Asc(Mid$(B$, t%)) - 48
+                Next: X$ = "": For t% = 1 To Len(B$) - 1
+                X$ = X$ + Chr$(B& And 255): B& = B& \ 256
+        Next: btemp$ = btemp$ + X$: Next
+        BASFILE$ = _Inflate$(btemp$): btemp$ = ""
+        Open ".\Resources\Icons\fast-forward-30.ico" For Output As #1
+        Print #1, BASFILE$;
+        Close #1
+    End If 'remove this line if you are compiling in FreeBasic
+End Sub
