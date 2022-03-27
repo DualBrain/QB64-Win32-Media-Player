@@ -482,6 +482,7 @@ Sub qStop ()
     ToggleEnable playpauseBtn, 0
     ToggleEnable seekLbtn, 0
     ToggleEnable seekRbtn, 0
+    ToggleEnable trackbar, 0
     SetTrackBarVal trackbar, 0
 End Sub
 
