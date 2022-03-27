@@ -760,11 +760,20 @@ Sub SizeVideoWindow (maxX As Unsigned Long, maxY As Unsigned Long)
             res = "put movie window at 0 30 1920 817" + Chr$(0)
         Else
             Print newWidth, newHeight, AspectRatio
-            res = "put movie window at" + Str$(iLeft + 50) + Str$(iTop - 5) + Str$(newWidth) + Str$(newHeight) + Chr$(0)
+            Print videoX, videoY
+            res = "put movie window at" + Str$(iLeft + 125) + Str$(iTop - 10) + Str$(newWidth - 175) + Str$((newHeight - 175) + GetTitlebarSize * 4) + Chr$(0)
         End If
     End If
     mciSendStringA res, 0, 0, 0
 End Sub
+
+Function GetTitlebarSize~& ()
+    Dim As POINT pt
+    Dim As RECT rc
+    ClientToScreen parentWin, Offset(pt)
+    GetWindowRect parentWin, Offset(rc)
+    GetTitlebarSize = pt.y - rc.top
+End Function
 
 Sub CenterWindow (win As Offset)
     Dim As Long nX, nY
