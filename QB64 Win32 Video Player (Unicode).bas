@@ -397,6 +397,7 @@ Function OpenMediaFile~& (fileName As String)
 End Function
 
 Sub qPlay (fileName As String)
+    SetWindowTextW parentWin, 0
     Dim As String ttitle: ttitle = ANSIToUnicode("Playing - ") + fileName + Chr$(0) + Chr$(0)
     SetWindowTextW parentWin, Offset(ttitle)
     If OpenMediaFile(fileName) = 0 Then
