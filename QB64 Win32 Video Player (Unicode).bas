@@ -45,6 +45,8 @@ Const WM_TIMER = &H0113
 Const WM_DROPFILES = &H0233
 Const WM_SETFONT = &H0030
 Const WM_MENUSELECT = &H011F
+Const WM_SIZE = &H0005
+Const WM_HSCROLL = &H0114
 
 Const IDCANCEL = 2
 Const IDNO = 7
@@ -106,6 +108,7 @@ Declare CustomType Library
     Function CreateWindowEx%& (ByVal dwExStyle As Long, Byval lpClassName As Offset, Byval lpWindowName As Offset, Byval dwStyle As Long, Byval X As Long, Byval Y As Long, Byval nWidth As Long, Byval nHeight As Long, Byval hWndParent As Offset, Byval wMenu As Offset, Byval hInstance As Offset, Byval lpParam As Offset)
     Function LoadCursor%& (ByVal hInstance As Offset, Byval lpCursorName As Offset)
     Sub SendMessage (ByVal hWnd As Offset, Byval Msg As Unsigned Long, Byval wParam As Unsigned Offset, Byval lParam As Offset)
+    Function SendMessage%& (ByVal hWnd As Offset, Byval Msg As Unsigned Long, Byval wParam As Unsigned Offset, Byval lParam As Offset)
     Function DefWindowProc%& (ByVal hWnd As Offset, Byval Msg As Unsigned Long, Byval wParam As Unsigned Offset, Byval lParam As Offset)
     Sub PostQuitMessage (ByVal nExitCode As Long)
     Sub ShowWindow (ByVal hWnd As Offset, Byval nCmdShow As Long)
@@ -265,6 +268,7 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
                 Case 1
                     If isPlaying = "playing" Then
                         RedrawWindow parentWin, 0, 0, &H0001 Or &H0100
+                        SetTrackBarVal trackbar, Round((GetVideoPos * 100) / (GetVideoLength))
                     End If
             End Select
         Case WM_COMMAND
@@ -306,14 +310,19 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
                     Exit Case
             End Select
             Exit Case
-        Case &H0005
+        Case WM_HSCROLL
+            Print "Scrolled"
+            Print GetTrackBarVal
+            SetVideoPos
+            Exit Case
+        Case WM_SIZE
             Select Case wParam
                 Case 2, 0
                     Print WindowWidth(parentWin), WindowHeight(parentWin)
-                    MoveWindow playpauseBtn, (WindowWidth(parentWin) / 2) - 20, WindowHeight(parentWin) - 90, 40, 40, -1
-                    MoveWindow seekLbtn, (WindowWidth(parentWin) / 2) - 60, WindowHeight(parentWin) - 90, 40, 40, -1
-                    MoveWindow seekRbtn, (WindowWidth(parentWin) / 2) + 20, WindowHeight(parentWin) - 90, 40, 40, -1
-                    MoveWindow trackbar, 5, WindowHeight(parentWin) - 110, WindowWidth(parentWin) - 20, 20, -1
+                    MoveWindow playpauseBtn, (WindowWidth(parentWin) / 2) - 20, WindowHeight(parentWin) - 80, 40, 30, -1
+                    MoveWindow seekLbtn, (WindowWidth(parentWin) / 2) - 60, WindowHeight(parentWin) - 80, 40, 30, -1
+                    MoveWindow seekRbtn, (WindowWidth(parentWin) / 2) + 20, WindowHeight(parentWin) - 80, 40, 30, -1
+                    MoveWindow trackbar, 5, WindowHeight(parentWin) - 110, WindowWidth(parentWin) - 20, 30, -1
                     If videoWin Then
                         If WindowWidth(parentWin) = 1280 And WindowHeight(parentWin) = 900 Then
                             SizeVideoWindow 1280, 720
@@ -338,9 +347,9 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
             End Select
             If isPlaying = "playing" And GetVideoPos = GetVideoLength Then qStop
         Case Else
-            If isPlaying = "playing" Then
-                SetTrackBarVal trackbar, Round((GetVideoPos * 100) / (GetVideoLength))
-            End If
+            'If isPlaying = "playing" Then
+            '    SetTrackBarVal trackbar, Round((GetVideoPos * 100) / (GetVideoLength))
+            'End If
             WindowProc = DefWindowProc(hwnd, uMsg, wParam, lParam)
     End Select
 End Function
@@ -448,6 +457,17 @@ End Sub
 
 Sub SeekRight ()
     Dim As Unsigned Integer64 position: position = GetVideoPos + 30000
+    Dim As String playCommand
+    If position < GetVideoLength Then
+        playCommand = "seek movie to" + Str$(position) + " notify" + Chr$(0)
+        mciSendStringA playCommand, 0, 0, parentWin
+        playCommand = "Play movie notify" + Chr$(0)
+        mciSendStringA playCommand, 0, 0, parentWin
+    End If
+End Sub
+
+Sub SetVideoPos ()
+    Dim As Unsigned Integer64 position: position = GetVideoLength * (GetTrackBarVal / 100)
     Dim As String playCommand
     If position < GetVideoLength Then
         playCommand = "seek movie to" + Str$(position) + " notify" + Chr$(0)
@@ -649,6 +669,11 @@ Sub SetTrackBarVal (tbHandle As Offset, newValue As Unsigned Integer64)
     SendMessage tbHandle, TBM_SETPOS, -61, newValue
 End Sub
 
+Function GetTrackBarVal~&
+    Const TBM_GETPOS = &H0400
+    GetTrackBarVal = Val(Str$(SendMessage(trackbar, TBM_GETPOS, 0, 0)))
+End Function
+
 Function CommandW%& ()
     Declare CustomType Library
         Function GetCommandLineW%& ()
@@ -729,6 +754,7 @@ Sub AdjustWindow (vhandle As Offset)
     ToggleEnable playpauseBtn, 1
     ToggleEnable seekLbtn, 1
     ToggleEnable seekRbtn, 1
+    ToggleEnable trackbar, 1
 End Sub
 
 Sub SizeVideoWindow (maxX As Unsigned Long, maxY As Unsigned Long)
