@@ -120,8 +120,8 @@ Declare CustomType Library
     Sub GetWindowRect (ByVal hWnd As Offset, Byval lpRect As Offset)
     Sub SetWindowPos (ByVal hWnd As Offset, Byval hWndInsertAfter As Offset, Byval X As Long, Byval Y As Long, Byval cx As Long, Byval cy As Long, Byval uFlags As Unsigned Long)
     Sub GetWindowTextW (ByVal hWnd As Offset, Byval lpString As Offset, Byval nMaxCount As Long)
-    Sub SetWindowTextW (ByVal hWnd As Offset, Byval lpString As Offset)
-    Sub SetWindowTextA (ByVal hWnd As Offset, Byval lpString As Offset)
+    'Sub SetWindowTextW (ByVal hWnd As Offset, Byval lpString As Offset)
+    'Sub SetWindowTextA (ByVal hWnd As Offset, Byval lpString As Offset)
     Function GetWindowLongPtr%& (ByVal hWnd As Offset, Byval nIndex As Long)
     Sub SetWindowLongPtr (ByVal hWnd As Offset, Byval nIndex As Long, Byval dwNewLong As Offset)
     Sub RedrawWindow (ByVal hWnd As Offset, Byval lprcUpdate As Offset, Byval hrgnUpdate As Offset, Byval flags As Unsigned Long)
@@ -397,9 +397,6 @@ Function OpenMediaFile~& (fileName As String)
 End Function
 
 Sub qPlay (fileName As String)
-    SetWindowTextW parentWin, 0
-    Dim As String ttitle: ttitle = ANSIToUnicode("Playing - ") + fileName + Chr$(0) + Chr$(0)
-    SetWindowTextW parentWin, Offset(ttitle)
     If OpenMediaFile(fileName) = 0 Then
         If WindowWidth(parentWin) = 1280 And WindowHeight(parentWin) = 900 Then
             SizeVideoWindow 1280, 720
@@ -483,8 +480,6 @@ End Sub
 
 Sub qStop ()
     ClosePlayer
-    Dim As String ttitle: ttitle = "QB64 Win32 Video Player" + Chr$(0)
-    SetWindowTextA parentWin, Offset(ttitle)
     ToggleEnable playpauseBtn, 0
     ToggleEnable seekLbtn, 0
     ToggleEnable seekRbtn, 0
