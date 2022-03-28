@@ -119,9 +119,6 @@ Declare CustomType Library
     Sub EnableWindow (ByVal hWnd As Offset, Byval bEnable As Long)
     Sub GetWindowRect (ByVal hWnd As Offset, Byval lpRect As Offset)
     Sub SetWindowPos (ByVal hWnd As Offset, Byval hWndInsertAfter As Offset, Byval X As Long, Byval Y As Long, Byval cx As Long, Byval cy As Long, Byval uFlags As Unsigned Long)
-    Sub GetWindowTextW (ByVal hWnd As Offset, Byval lpString As Offset, Byval nMaxCount As Long)
-    'Sub SetWindowTextW (ByVal hWnd As Offset, Byval lpString As Offset)
-    'Sub SetWindowTextA (ByVal hWnd As Offset, Byval lpString As Offset)
     Function GetWindowLongPtr%& (ByVal hWnd As Offset, Byval nIndex As Long)
     Sub SetWindowLongPtr (ByVal hWnd As Offset, Byval nIndex As Long, Byval dwNewLong As Offset)
     Sub RedrawWindow (ByVal hWnd As Offset, Byval lprcUpdate As Offset, Byval hrgnUpdate As Offset, Byval flags As Unsigned Long)
@@ -148,6 +145,9 @@ End Declare
 
 Declare CustomType Library ".\internal\c\c_compiler\x86_64-w64-mingw32\include\shellapi"
     Function ExtractIcon%& (ByVal hInst As Offset, pszExeFileName As String, Byval nIconIndex As Unsigned Long)
+    Sub DragAcceptFiles (ByVal hWnd As Offset, Byval fAccept As Long)
+    Sub DragQueryFile Alias "DragQueryFileW" (ByVal hDrop As Offset, Byval iFile As Unsigned Long, Byval lpszFile As Offset, Byval cch As Unsigned Long)
+    Sub DragFinish (ByVal hDrop As Offset)
 End Declare
 
 Declare Library "win"
@@ -160,9 +160,8 @@ $ExeIcon:'.\Resources\Icons\video-vintage.ico'
 Icon
 
 CreateIcons
-SetConsoleUnicode
 
-Dim Shared As Offset parentWin, hInstance, videoWin, playpauseBtn, seekLbtn, seekRbtn, trackbar 'openBtn,
+Dim Shared As Offset parentWin, hInstance, videoWin, playpauseBtn, seekLbtn, seekRbtn, trackbar, statusbar 'openBtn,
 Dim Shared As Unsigned Long AboutMenu: AboutMenu = 99
 Dim Shared As Long isOpen: isOpen = 0
 hInstance = GetModuleHandle(0)
@@ -219,10 +218,11 @@ Sub StartUp ()
     FadeIn parentWin, 500
     UpdateWindow parentWin
 
+    DragAcceptFiles parentWin, 1
+
     If CommandCount Then
         Dim As Offset arg: arg = CommandW
         If FileExistsW(arg) Then
-            wprintf arg
             qPlay PointerToWideString(arg)
             videoWin = VideoHandle
             ToggleEnable playpauseBtn, 1
@@ -259,7 +259,6 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
         Case WM_CLOSE
             FadeOut parentWin, 500
             WindowProc = DefWindowProc(hwnd, uMsg, wParam, lParam)
-            Exit Case
         Case WM_DESTROY
             PostQuitMessage 0
             WindowProc = 0
@@ -272,6 +271,24 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
                         SetTrackBarVal trackbar, Round((GetVideoPos * 100) / (GetVideoLength))
                     End If
             End Select
+        Case WM_DROPFILES
+            Dim As Offset hDrop: hDrop = wParam
+            Dim As String dropped: dropped = Space$(65534)
+            Dim As Offset videof
+            DragQueryFile hDrop, 0, Offset(dropped), 65534
+            videof = Offset(dropped)
+            DragFinish hDrop
+            If CheckExtension(videof) Then
+                If isPlaying = "playing" Or isPlaying = "paused" Then
+                    AlreadyPlayingPopup PointerToWideString(videof)
+                Else
+                    qPlay PointerToWideString(videof)
+                    videoWin = VideoHandle
+                    SetWindow videoWin
+                End If
+            Else
+                ErrorPopup "File Format Error", "Unsupported file format", "I haven't yet checked this file type. Perhaps it is a strange one you like. However, please stick to using the ones allowed by the open file dialog." + Chr$(10) + Chr$(10) + "-Spriggsy"
+            End If
         Case WM_COMMAND
             Select Case lParam
                 Case playpauseBtn
@@ -280,23 +297,18 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
                     ElseIf isPlaying = "paused" Then
                         qResume
                     End If
-                    Exit Case
                 Case seekLbtn
                     SeekLeft
-                    Exit Case
                 Case seekRbtn
                     SeekRight
-                    Exit Case
             End Select
             Select Case LOWORD(Val(Str$(wParam)))
                 Case AboutMenu
                     Print LOWORD(Val(Str$(wParam))), LOWORD(Val(Str$(lParam)))
                     AboutPopup
-                    Exit Case
                 Case AboutMenu + 1
                     Dim As Offset video: video = ComDlgFileName("Select Video", Dir$("videos"), "Video Files (*.AVI, *.MP4, *.MKV, *.MPG, *.WMV)|*.AVI;*.MP4;*.MKV;*.MPG;*.WMV", 2, UNICODE)
                     If video <> 0 Then
-                        wprintf video
                         If isPlaying = "playing" Or isPlaying = "paused" Then
                             AlreadyPlayingPopup PointerToWideString(video)
                         Else
@@ -304,18 +316,16 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
                                 qPlay PointerToWideString(video)
                                 videoWin = VideoHandle
                                 Print videoWin
-                                AdjustWindow (videoWin)
+                                SetWindow videoWin
                             End If
                         End If
                     End If
-                    Exit Case
             End Select
             Exit Case
         Case WM_HSCROLL
             Print "Scrolled"
             Print GetTrackBarVal
             SetVideoPos
-            Exit Case
         Case WM_SIZE
             Select Case wParam
                 Case 2, 0
@@ -324,7 +334,7 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
                     MoveWindow seekLbtn, (WindowWidth(parentWin) / 2) - 60, WindowHeight(parentWin) - 80, 40, 30, -1
                     MoveWindow seekRbtn, (WindowWidth(parentWin) / 2) + 20, WindowHeight(parentWin) - 80, 40, 30, -1
                     MoveWindow trackbar, 5, WindowHeight(parentWin) - 110, WindowWidth(parentWin) - 20, 30, -1
-                    If videoWin Then
+                    If videoWin And isPlaying = "playing" Or isPlaying = "paused" Then
                         If WindowWidth(parentWin) = 1280 And WindowHeight(parentWin) = 900 Then
                             SizeVideoWindow 1280, 720
                         Else
@@ -336,15 +346,11 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
             Select Case wParam
                 Case MCI_NOTIFY_ABORTED
                     If isPlaying = "stopped" Then qStop
-                    Exit Case
                 Case MCI_NOTIFY_FAILURE
                     qStop
-                    Exit Case
                 Case MCI_NOTIFY_SUCCESSFUL
                     If isPlaying = "stopped" Then qStop
-                    Exit Case
                 Case MCI_NOTIFY_SUPERSEDED
-                    Exit Case
             End Select
             If isPlaying = "playing" And GetVideoPos = GetVideoLength Then qStop
         Case Else
@@ -584,7 +590,7 @@ Sub ErrorPopup (eTitle As String, mciErrString As String, errMessage As String)
     Dim As String szTitle: szTitle = ANSIToUnicode(eTitle + Chr$(0))
     tdconfig.pszWindowTitle = Offset(szTitle)
     tdconfig.pszMainIcon = TD_ERROR_ICON
-    Dim As String szHeader: szHeader = mciErrString
+    Dim As String szHeader: szHeader = ANSIToUnicode(mciErrString + Chr$(0))
     tdconfig.pszMainInstruction = Offset(szHeader)
     Dim As String szBodyText: szBodyText = ANSIToUnicode(errMessage + Chr$(0))
     tdconfig.pszContent = Offset(szBodyText)
@@ -752,7 +758,7 @@ Sub qMoveWindow (X As Long, Y As Long, win As Offset)
     SetWindowPos win, 0, X, Y, 0, 0, SWP_NOSIZE
 End Sub
 
-Sub AdjustWindow (vhandle As Offset)
+Sub SetWindow (vhandle As Offset)
     ToggleEnable playpauseBtn, 1
     ToggleEnable seekLbtn, 1
     ToggleEnable seekRbtn, 1
@@ -784,7 +790,7 @@ Sub SizeVideoWindow (maxX As Unsigned Long, maxY As Unsigned Long)
     If WindowWidth(parentWin) = 1280 And WindowHeight(parentWin) = 900 Then
         res = "put movie window at 0 30 1280 720" + Chr$(0)
     Else
-        If videoX < maxX And videoY < maxY Then
+        If videoX < maxX Or videoY < maxY Then
             res = "put movie window at 0 30 1920 817" + Chr$(0)
         Else
             Print newWidth, newHeight, AspectRatio
@@ -837,25 +843,6 @@ End Sub
 
 Sub FadeIn (handle As Offset, time As Unsigned Long) 'Only use after a function that hides the window
     AnimateWindow handle, time, AW_BLEND Or AW_ACTIVATE
-End Sub
-
-Sub SetConsoleUnicode ()
-    Const CP_UTF8 = 65001
-    Const LC_ALL = 0
-
-    Declare CustomType Library
-        Sub wprintf (ByVal format As _Offset)
-        Sub printf (ByVal format As _Offset)
-        Sub SetConsoleCP (ByVal wCodePageID As Unsigned Long)
-        Sub SetConsoleOutputCP (ByVal wCodePageID As Unsigned Long)
-        Function setlocale%& Alias "_wsetlocale" (ByVal category As Long, Byval locale As Offset)
-    End Declare
-
-    SetConsoleCP CP_UTF8
-    SetConsoleOutputCP CP_UTF8
-
-    Dim As String newLocale: newLocale = ANSIToUnicode(".<UTF-8>" + Chr$(0))
-    Dim As Offset locale: locale = setlocale(LC_ALL, Offset(newLocale))
 End Sub
 
 Sub tokenize (toTokenize As String, delimiters As String, StorageArray() As String)
