@@ -6,8 +6,8 @@ Console Off
 $VersionInfo:CompanyName=SpriggsySpriggs
 $VersionInfo:FileDescription=QB64 Win32 Video Player (Unicode)
 $VersionInfo:ProductName=QB64 Win32 Video Player (Unicode)
-$VersionInfo:ProductVersion=0,0,4,0
-$VersionInfo:FileVersion=0,0,4,0
+$VersionInfo:ProductVersion=1,0,0,2
+$VersionInfo:FileVersion=1,0,0,2
 $VersionInfo:LegalCopyright=2022 SpriggsySpriggs
 $VersionInfo:Web=https://github.com/SpriggsySpriggs/QB64-Win32-Video-Player
 $VersionInfo:Comments=The Unicode build of the QB64 Win32 Video Player
@@ -164,6 +164,7 @@ CreateIcons
 Dim Shared As Offset parentWin, hInstance, videoWin, playpauseBtn, seekLbtn, seekRbtn, trackbar, statusbar 'openBtn,
 Dim Shared As Unsigned Long AboutMenu: AboutMenu = 99
 Dim Shared As Long isOpen: isOpen = 0
+Dim Shared As Byte isAudioFile: isAudioFile = 0
 hInstance = GetModuleHandle(0)
 
 StartUp
@@ -252,6 +253,9 @@ End Sub
 '$Include:'Resources\Includes\rewind-10.ico.BM'
 '$Include:'Resources\Includes\movie-open.ico.BM'
 
+'Function BalanceProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned Offset, lParam As Offset) 'placeholder for callback function
+'End Function
+
 Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned Offset, lParam As Offset)
     Const MAX_PATH = 65534
     Select Case uMsg
@@ -287,7 +291,7 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
                     SetWindow videoWin
                 End If
             Else
-                ErrorPopup "File Format Error", "Unsupported file format", "I haven't yet checked this file type. Perhaps it is a strange one you like. However, please stick to using the ones allowed by the open file dialog." + Chr$(10) + Chr$(10) + "-Spriggsy"
+                ErrorPopup "File Format Error", ANSIToUnicode("Unsupported file format" + Chr$(0)), "I haven't yet checked this file type. Perhaps it is a strange one you like. However, please stick to using the ones allowed by the open file dialog." + Chr$(10) + Chr$(10) + "-Spriggsy"
             End If
         Case WM_COMMAND
             Select Case lParam
@@ -307,17 +311,21 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
                     Print LOWORD(Val(Str$(wParam))), LOWORD(Val(Str$(lParam)))
                     AboutPopup
                 Case AboutMenu + 1
-                    Dim As Offset video: video = ComDlgFileName("Select Video", Dir$("videos"), "Video Files (*.AVI, *.MP4, *.MKV, *.MPG, *.WMV)|*.AVI;*.MP4;*.MKV;*.MPG;*.WMV", 2, UNICODE)
+                    Dim As Offset video: video = ComDlgFileName("Select Video or Song", Dir$("videos"), "Video Files (*.AVI, *.MP4, *.MKV, *.MPG, *.WMV)|*.AVI;*.MP4;*.MKV;*.MPG;*.WMV|Audio Files (*.MP3, *.FLAC, *.M4A, *.WAV)|*.MP3;*.FLAC;*.M4A;*.WAV", 1, UNICODE)
                     If video <> 0 Then
-                        If isPlaying = "playing" Or isPlaying = "paused" Then
-                            AlreadyPlayingPopup PointerToWideString(video)
-                        Else
-                            If video <> 0 Then
-                                qPlay PointerToWideString(video)
-                                videoWin = VideoHandle
-                                Print videoWin
-                                SetWindow videoWin
+                        If CheckExtension(video) Then
+                            If isPlaying = "playing" Or isPlaying = "paused" Then
+                                AlreadyPlayingPopup PointerToWideString(video)
+                            Else
+                                If video <> 0 Then
+                                    qPlay PointerToWideString(video)
+                                    videoWin = VideoHandle
+                                    Print videoWin
+                                    SetWindow videoWin
+                                End If
                             End If
+                        Else
+                            ErrorPopup "File Format Error", ANSIToUnicode("Unsupported file format" + Chr$(0)), "I haven't yet checked this file type. Perhaps it is a strange one you like. However, please stick to using the ones allowed by the open file dialog." + Chr$(10) + Chr$(10) + "-Spriggsy"
                         End If
                     End If
             End Select
@@ -334,7 +342,7 @@ Function WindowProc%& (hwnd As Offset, uMsg As Unsigned Long, wParam As Unsigned
                     MoveWindow seekLbtn, (WindowWidth(parentWin) / 2) - 60, WindowHeight(parentWin) - 80, 40, 30, -1
                     MoveWindow seekRbtn, (WindowWidth(parentWin) / 2) + 20, WindowHeight(parentWin) - 80, 40, 30, -1
                     MoveWindow trackbar, 5, WindowHeight(parentWin) - 110, WindowWidth(parentWin) - 20, 30, -1
-                    If videoWin And isPlaying = "playing" Or isPlaying = "paused" Then
+                    If videoWin And isPlaying = "playing" Or isPlaying = "paused" And isAudioFile = 0 Then
                         If WindowWidth(parentWin) = 1280 And WindowHeight(parentWin) = 900 Then
                             SizeVideoWindow 1280, 720
                         Else
@@ -392,9 +400,9 @@ Function OpenMediaFile~& (fileName As String)
     mciError = mciSendStringW(playCommand, 0, 0, 0)
     Print mciError
     If mciError <> 0 Then
-        Dim As String errString: errString = String$(128 * 2, Chr$(0))
+        Dim As String errString: errString = Space$(128 * 2)
         mciGetErrorStringW mciError, Offset(errString), 128 * 2
-        ErrorPopup "MCI Error Encountered", errString + ANSIToUnicode(Chr$(0)), "Most MCI errors are caused by not having the proper codec installed. To fix this, please install the K-Lite Codec Pack Full by clicking this link:" + Chr$(10) + "<A HREF=" + Chr$(34) + "https://codecguide.com/download_k-lite_codec_pack_full.htm" + Chr$(34) + ">K-Lite Codec Pack Full Download</A>"
+        ErrorPopup "MCI Error Encountered", errString, "Most MCI errors are caused by not having the proper codec installed. To fix this, please install the K-Lite Codec Pack Full by clicking this link:" + Chr$(10) + "<A HREF=" + Chr$(34) + "https://codecguide.com/download_k-lite_codec_pack_full.htm" + Chr$(34) + ">K-Lite Codec Pack Full Download</A>"
         isOpen = 0
     Else
         isOpen = -1
@@ -404,10 +412,12 @@ End Function
 
 Sub qPlay (fileName As String)
     If OpenMediaFile(fileName) = 0 Then
-        If WindowWidth(parentWin) = 1280 And WindowHeight(parentWin) = 900 Then
-            SizeVideoWindow 1280, 720
-        Else
-            SizeVideoWindow WindowWidth(parentWin) - 100, WindowHeight(parentWin) - 100
+        If isAudioFile = 0 Then
+            If WindowWidth(parentWin) = 1280 And WindowHeight(parentWin) = 900 Then
+                SizeVideoWindow 1280, 720
+            Else
+                SizeVideoWindow WindowWidth(parentWin) - 100, WindowHeight(parentWin) - 100
+            End If
         End If
         PlayMediaFile
     Else
@@ -590,7 +600,7 @@ Sub ErrorPopup (eTitle As String, mciErrString As String, errMessage As String)
     Dim As String szTitle: szTitle = ANSIToUnicode(eTitle + Chr$(0))
     tdconfig.pszWindowTitle = Offset(szTitle)
     tdconfig.pszMainIcon = TD_ERROR_ICON
-    Dim As String szHeader: szHeader = ANSIToUnicode(mciErrString + Chr$(0))
+    Dim As String szHeader: szHeader = mciErrString + Chr$(0)
     tdconfig.pszMainInstruction = Offset(szHeader)
     Dim As String szBodyText: szBodyText = ANSIToUnicode(errMessage + Chr$(0))
     tdconfig.pszContent = Offset(szBodyText)
@@ -728,13 +738,20 @@ End Sub
 Function CheckExtension%% (fileName As Offset)
     Declare CustomType Library
         Function CharUpperW%& (ByVal lpsz As Offset)
+        Sub wprintf (ByVal format As Offset)
     End Declare
-    Dim As String avi, mp4, mkv, mpg, wmv
-    avi = ANSIToUnicode(".AVI"): mp4 = ANSIToUnicode(".MP4"): mkv = ANSIToUnicode(".MKV"): mpg = ANSIToUnicode(".MPG"): wmv = ANSIToUnicode(".WMV")
+    Dim As String avi, mp4, mkv, mpg, wmv, mp3, flac, m4a, wav
+    avi = ANSIToUnicode(".AVI"): mp4 = ANSIToUnicode(".MP4"): mkv = ANSIToUnicode(".MKV"): mpg = ANSIToUnicode(".MPG"): wmv = ANSIToUnicode(".WMV"): mp3 = ANSIToUnicode(".MP3"): flac = ANSIToUnicode(".FLAC"): m4a = ANSIToUnicode(".M4A"): wav = ANSIToUnicode(".WAV")
     Dim As String decimal: decimal = ANSIToUnicode("." + Chr$(0))
     Dim As Offset pExtension: pExtension = StrRStrIW(fileName, 0, Offset(decimal))
     Dim As String extension: extension = PointerToWideString(CharUpperW(pExtension))
-    If extension <> avi And extension <> mp4 And extension <> mkv And extension <> mpg And extension <> wmv Then
+    'wprintf pExtension
+    If extension = mp3 Or extension = flac Or extension = m4a Or extension = wav Then
+        isAudioFile = -1
+    Else
+        isAudioFile = 0
+    End If
+    If extension <> avi And extension <> mp4 And extension <> mkv And extension <> mpg And extension <> wmv And extension <> mp3 And extension <> flac And extension <> m4a And extension <> wav Then
         CheckExtension = 0
     Else
         CheckExtension = -1
